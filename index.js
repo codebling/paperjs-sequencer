@@ -1,7 +1,5 @@
 var Promise = require('bluebird');
 var paper = require('paper');
-var List = require('collections/list');
-var Map = require('collections/map');
 
 var mapOfViewsToListOfSequences = new Map();
 
@@ -14,20 +12,21 @@ module.exports = function(item, animationRoutine, view) {
   if(mapOfViewsToListOfSequences.has(view)) {
     listOfSequences = mapOfViewsToListOfSequences.get(view);
   } else {
-    listOfSequences = new List();
-    mapOfViewsToListOfSequences.add(view, listOfSequences);
+    listOfSequences = [];
+    mapOfViewsToListOfSequences.set(view, listOfSequences);
     view.on('frame', function(event) {
-      listOfSequences.forEach(function(entry) {
+      for(var i = listOfSequences.length - 1; i >= 0; i--) {
+        var entry = listOfSequences[i];
         var finished = entry.routine(
           item,
           event,
           (Date.now() - entry.timeInMilliseconds) / 1000
         );
         if(finished) {
-          listOfSequences.delete(entry); //safe per collection js docs
+          listOfSequences.splice(i, 1);
           entry.promise.resolve();
         }
-      });
+      }
     });
   }
 
